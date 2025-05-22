@@ -117,8 +117,13 @@ if submit and query:
             # === Summarize with LLaMA-3 ===
             st.info("🧠 Summarizing articles using LLaMA-3 via Groq...")
             api_key = os.getenv("GROQ_API_KEY")
+            if not api_key:
+                raise ValueError("Missing GROQ_API_KEY environment variable")
+            os.environ["GROQ_API_KEY"] = api_key  # optional, if needed for some lib
+
+            # os.environ["GROQ_API_KEY"] = "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"  # Replace securely
             chunks = textwrap.wrap(all_content, width=3000)
-            llm = Groq(model="llama3-8b-8192",api_key=api_key)
+            llm = Groq(model="llama3-8b-8192")
 
             chunk_prompt = PromptTemplate(
                 "Read the following news content and summarize it concisely. "
