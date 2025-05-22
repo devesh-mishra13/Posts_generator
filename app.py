@@ -14,24 +14,33 @@ import textwrap
 @st.cache_resource
 def setup_driver():
     chrome_options = Options()
+    # Use new headless mode (Chrome 109+)
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--window-size=1920,1080")
+    
+    # Use a valid Windows temp folder for user data dir or remove this line
     user_data_dir = os.path.join(os.getenv('TEMP', 'C:\\Temp'), f"chrome-user-data-{int(time.time())}")
     chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+    
+    # Remove --no-sandbox on Windows
+    # Remove --remote-debugging-port unless you really need it
+
     return webdriver.Chrome(options=chrome_options)
 
+# === Check if article is recent ===
 def is_recent_article(date_text):
     recent_patterns = [r'minute[s]? ago', r'hour[s]? ago', r'1 day ago', r'yesterday', r'today']
     return any(re.search(pattern, date_text.lower()) for pattern in recent_patterns)
 
+# === Google News Search ===
 def search_google_news_latest(driver, query):
     formatted_query = query.replace(' ', '+')
     driver.get(f"https://www.google.com/search?q={formatted_query}&tbm=nws&tbs=sbd:1")
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.SoaBEf")))
-
+    
     news_results = []
     results = driver.find_elements(By.CSS_SELECTOR, "div.SoaBEf")
     for result in results:
@@ -49,6 +58,7 @@ def search_google_news_latest(driver, query):
             continue
     return news_results
 
+# === Extract Full Article Content ===
 def extract_article_content(driver, url):
     try:
         driver.get(url)
@@ -106,8 +116,9 @@ if submit and query:
 
             # === Summarize with LLaMA-3 ===
             st.info("🧠 Summarizing articles using LLaMA-3 via Groq...")
+            api_key = os.getenv("GROQ_API_KEY")
             chunks = textwrap.wrap(all_content, width=3000)
-            llm = Groq(model="llama3-8b-8192")  # GROQ_API_KEY is fetched from environment
+            llm = Groq(model="llama3-8b-8192",api_key=api_key)
 
             chunk_prompt = PromptTemplate(
                 "Read the following news content and summarize it concisely. "
@@ -137,6 +148,7 @@ if submit and query:
             {context_str}
             """
             ).format(context_str=final_input)
+
 
             final_response = llm.complete(final_prompt)
             st.subheader("📢 LinkedIn-style Post Summary")
