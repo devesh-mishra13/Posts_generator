@@ -116,6 +116,7 @@ if submit and query:
 
             # === Summarize with LLaMA-3 ===
             st.info("🧠 Summarizing articles using LLaMA-3 via Groq...")
+            print(os.getenv("GROQ_API_KEY"))
             api_key = os.getenv("GROQ_API_KEY")
 
             chunks = textwrap.wrap(all_content, width=3000)

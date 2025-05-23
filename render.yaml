@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: news-summarizer
+    env: docker
+    plan: free
+    autoDeploy: true
+    branch: main  # Change if you're using a different branch
