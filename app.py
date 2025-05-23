@@ -14,21 +14,20 @@ import textwrap
 @st.cache_resource
 def setup_driver():
     chrome_options = Options()
-    # Use new headless mode (Chrome 109+)
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--disable-notifications")
     chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--window-size=1920,1080")
-    
-    # Use a valid Windows temp folder for user data dir or remove this line
-    user_data_dir = os.path.join(os.getenv('TEMP', 'C:\\Temp'), f"chrome-user-data-{int(time.time())}")
-    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
-    
-    # Remove --no-sandbox on Windows
-    # Remove --remote-debugging-port unless you really need it
 
-    return webdriver.Chrome(options=chrome_options)
+    chrome_bin = os.getenv("GOOGLE_CHROME_BIN", "/usr/bin/google-chrome")
+    driver_bin = os.getenv("CHROMEDRIVER_PATH", "/usr/bin/chromedriver")
+    chrome_options.binary_location = chrome_bin
+
+    return webdriver.Chrome(executable_path=driver_bin, options=chrome_options)
+
 
 # === Check if article is recent ===
 def is_recent_article(date_text):
