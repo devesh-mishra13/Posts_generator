@@ -28,13 +28,10 @@ def setup_driver():
 
     return webdriver.Chrome(executable_path=driver_bin, options=chrome_options)
 
-
-# === Check if article is recent ===
 def is_recent_article(date_text):
     recent_patterns = [r'minute[s]? ago', r'hour[s]? ago', r'1 day ago', r'yesterday', r'today']
     return any(re.search(pattern, date_text.lower()) for pattern in recent_patterns)
 
-# === Google News Search ===
 def search_google_news_latest(driver, query):
     formatted_query = query.replace(' ', '+')
     driver.get(f"https://www.google.com/search?q={formatted_query}&tbm=nws&tbs=sbd:1")
@@ -57,7 +54,6 @@ def search_google_news_latest(driver, query):
             continue
     return news_results
 
-# === Extract Full Article Content ===
 def extract_article_content(driver, url):
     try:
         driver.get(url)
@@ -115,10 +111,9 @@ if submit and query:
 
             # === Summarize with LLaMA-3 ===
             st.info("🧠 Summarizing articles using LLaMA-3 via Groq...")
-            print(os.getenv("GROQ_API_KEY"))
-            api_key = os.getenv("GROQ_API_KEY")
 
-            chunks = textwrap.wrap(all_content, width=3000)
+            # Set your Groq API Key securely
+            api_key=os.getenv["GROQ_API_KEY"]
             llm = Groq(model="llama3-8b-8192",api_key=api_key)
 
             chunk_prompt = PromptTemplate(
@@ -126,6 +121,7 @@ if submit and query:
                 "Focus on key events, trends, numbers, and noteworthy developments.\n\n{context_str}"
             )
 
+            chunks = textwrap.wrap(all_content, width=3000)
             for chunk in chunks:
                 prompt = chunk_prompt.format(context_str=chunk)
                 response = llm.complete(prompt)
@@ -135,21 +131,19 @@ if submit and query:
             final_prompt = PromptTemplate(
                 """You are a professional technical writer for a tech-savvy audience on LinkedIn.
 
-            Based on the following summaries of recent news articles, create a compelling LinkedIn-style post in exactly 200 words. Use the following format:
+Based on the following summaries of recent news articles, create a compelling LinkedIn-style post in exactly 200 words. Use the following format:
 
-            1. 🔥 Catchy Title (at the top, should grab attention immediately)
-            2. ✨ Short & engaging introduction (2–3 lines to hook the reader)
-            3. 📌 Key Highlights (use bullet points with brief, informative, and technical points)
-            4. 🧵 End with a call-to-action or closing remark relevant to professionals.
-            5. 📢 Add 5-7 relevant and trending hashtags (maximize reach, only technical/industry-specific tags)
+1. 🔥 Catchy Title
+2. ✨ Short & engaging introduction
+3. 📌 Key Highlights (bullet points)
+4. 🧵 Closing remark
+5. 📢 Add 5-7 trending hashtags
 
-            Tone: Professional, insightful, and engaging. Avoid generic fluff. Assume your audience is engineers, founders, analysts, and industry insiders.
+Tone: Professional, insightful, and engaging.
 
-            Here is the context to summarize:
-            {context_str}
-            """
+{context_str}
+                """
             ).format(context_str=final_input)
-
 
             final_response = llm.complete(final_prompt)
             st.subheader("📢 LinkedIn-style Post Summary")
